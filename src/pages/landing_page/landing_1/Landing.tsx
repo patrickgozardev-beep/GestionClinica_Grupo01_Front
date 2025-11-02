@@ -1,16 +1,17 @@
 import React from "react";
-import { LandingContainer, HeroSection, ServicesSection, InfoSection, ContactSection } from "./Landing.styles";
+import { LandingContainer, ServicesSection, InfoSection, ContactSection, Section, SectionImage, SectionText, Banner, BannerContent, BannerTitle, BannerSubtitle, BannerButton } from "./Landing.styles";
 
 const Landing: React.FC = () => {
   return (
     <LandingContainer>
-      <HeroSection>
-        <div className="hero-content">
-          <h1>Toda una vida contigo</h1>
-          <p>En la Clínica, cuidamos de ti y de tu familia con más de 40 especialidades médicas.</p>
-          <button>Solicita tu cita</button>
-        </div>
-      </HeroSection>
+
+       <Banner bgImage="/images/banner_doctores.png">
+            <BannerContent>
+            <BannerTitle>Bienvenido a Nuestra Clínica</BannerTitle>
+            <BannerSubtitle>Atención especializada para su salud y bienestar</BannerSubtitle>
+            <BannerButton href="#contact">Agende su cita</BannerButton>
+          </BannerContent>
+        </Banner>
 
       <ServicesSection>
         <h2>Nuestros Servicios</h2>
@@ -33,6 +34,28 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </ServicesSection>
+
+      <Section bgColor="#f7f7f7">
+        <SectionImage>
+          <img src="/images/servicio1.jpg" alt="Servicio 1" />
+        </SectionImage>
+        <SectionText>
+          <h2>Servicio especializado 1</h2>
+          <p>Descripción del servicio 1: atención personalizada, profesionales de primer nivel, tecnología avanzada.</p>
+        </SectionText>
+      </Section>
+
+      {/* Sección 2: Imagen derecha, texto izquierda */}
+      <Section>
+        <SectionText>
+          <h2>Servicio especializado 2</h2>
+          <p>Descripción del servicio 2: cuidado integral, equipos modernos, confort y seguridad.</p>
+        </SectionText>
+        <SectionImage>
+          <img src="/images/servicio2.jpg" alt="Servicio 2" />
+        </SectionImage>
+      </Section>
+
 
       <InfoSection>
         <h2>¿Por qué elegirnos?</h2>
