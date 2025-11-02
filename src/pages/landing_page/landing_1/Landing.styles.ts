@@ -1,52 +1,60 @@
 import styled from "styled-components";
 
+
+interface BannerProps {
+  bgImage: string;
+}
+interface SectionProps {
+  bgColor?: string; 
+  }
+
 export const LandingContainer = styled.div`
   font-family: "Poppins", sans-serif;
   color: #004c4c;
   line-height: 1.5;
 `;
-
-export const HeroSection = styled.section`
-  background-image: url("/assets/images/clinic-hero.jpg");
+export const Banner = styled.section<BannerProps>`
+  width: 100%;
+  height: 80vh;
+  background-image: ${props => `url(${props.bgImage})`};
   background-size: cover;
   background-position: center;
-  height: 60vh;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+`;
 
-  .hero-content {
-    background: rgba(255,255,255,0.85);
-    padding: 2rem 3rem;
-    text-align: center;
-    border-radius: 10px;
 
-    h1 {
-      font-size: 2.8rem;
-      margin-bottom: 1rem;
-      color: #003f3f;
-    }
+export const BannerContent = styled.div`
+  max-width: 800px;
+  padding: 0 20px;
+`;
 
-    p {
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
-    }
+export const BannerTitle = styled.h1`
+  font-size: 3rem;
+  margin-bottom: 1rem;
+`;
 
-    button {
-      background: #00a3a3;
-      color: white;
-      border: none;
-      padding: 0.8rem 2rem;
-      font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
+export const BannerSubtitle = styled.p`
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+`;
 
-      &:hover {
-        background: #008a8a;
-      }
-    }
+export const BannerButton = styled.a`
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: #004c4c;
+  color: white;
+  text-decoration: none;
+  font-size: 1.2rem;
+  border-radius: 4px;
+  &:hover {
+    background-color:rgb(9, 78, 72);
   }
 `;
+
 
 export const ServicesSection = styled.section`
   padding: 4rem 40px;
@@ -81,6 +89,48 @@ export const ServicesSection = styled.section`
     }
   }
 `;
+
+
+export const Section = styled.section<SectionProps>`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4rem 2rem;
+  background-color: ${props => props.bgColor || "#fff"};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+export const SectionImage = styled.div`
+  flex: 1 1 50%;
+  padding: 1rem;
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+  }
+`;
+
+export const SectionText = styled.div`
+  flex: 1 1 50%;
+  padding: 1rem;
+  
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+`;
+
+
+
 
 export const InfoSection = styled.section`
   padding: 3rem 40px;

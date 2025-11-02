@@ -8,10 +8,13 @@ const Menu: React.FC = () => {
       <h2>Clinica Digital</h2>
       <nav>
         <MenuItem>
-          <NavLink to="/" end>Inicio</NavLink>
+          <NavLink to="/home" end>Inicio</NavLink>
         </MenuItem>
         <MenuItem>
           <NavLink to="/about">Nosotros</NavLink>
+        </MenuItem>
+        <MenuItem>
+          <NavLink to="/appointment">Agenda tu cita</NavLink>
         </MenuItem>
       </nav>
     </MenuContainer>
