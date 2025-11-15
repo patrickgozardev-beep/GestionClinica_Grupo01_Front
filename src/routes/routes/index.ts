@@ -1,9 +1,11 @@
-import { publicRoutes } from './publicRoutes';
-import { adminRoutes } from './adminRoutes';
-//import { doctorRoutes } from './doctorRoutes';
+import { publicRoutes } from "./PublicRoutes";
+import { pacienteRoutes } from "./PacienteRoutes";
+import { adminRoutes } from "./AdminRoutes";
+import { doctorRoutes } from "./DoctorRoutes";
 
 export const allRoutes = [
   ...publicRoutes,
   ...adminRoutes,
-  //...doctorRoutes,
+  ...doctorRoutes,
+  ...pacienteRoutes,
 ];
