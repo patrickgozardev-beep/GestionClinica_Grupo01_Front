@@ -15,7 +15,6 @@ export default function AppRouter() {
       ))}
 
 
-        {/* Redirección para rutas inexistentes */}
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
