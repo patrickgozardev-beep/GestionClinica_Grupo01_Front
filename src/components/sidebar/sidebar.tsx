@@ -40,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role }) => {
     { label: "Usuarios", icon: <User size={18} />, to: "/admin/usuarios" },
     { label: "Espacios", icon: <ClipboardList size={18} />, to: "/admin/espacios" },
     { label: "Horarios", icon: <Clock size={18} />, to: "/admin/horarios" },
+    { label: "Plantilla de horarios", icon: <Clock size={18} />, to: "/admin/plantilla-horario" },
     { label: "Reservas", icon: <Calendar size={18} />, to: "/admin/reservas" },
     { label: "Aforo", icon: <ClipboardList size={18} />, to: "/admin/aforo" },
     { label: "Notificaciones", icon: <Clock size={18} />, to: "/admin/notificaciones" },

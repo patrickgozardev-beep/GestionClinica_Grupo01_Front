@@ -1,0 +1,27 @@
+[
+    {
+      "id": 1,
+      "nombre": "Gimnasio Principal",
+      "ubicacion": "Sede Central",
+      "capacidad": 50,
+      "especialidad_id": 1,
+      "estado": true
+    },
+    {
+      "id": 2,
+      "nombre": "Sala Odontología",
+      "ubicacion": "Sede Norte",
+      "capacidad": 5,
+      "especialidad_id": 1,
+      "estado": true
+    },
+    {
+      "id": 3,
+      "nombre": "Sala Pediatría",
+      "ubicacion": "Sede Central",
+      "capacidad": 3,
+      "especialidad_id": 2,
+      "estado": true
+    }
+  ]
+  

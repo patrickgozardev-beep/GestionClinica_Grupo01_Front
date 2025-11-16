@@ -6,6 +6,7 @@ import RegisterUser from "../register/RegisterUser";
 import { useDispatch } from "react-redux";
 import { setRole, logout } from "../../store/slices/user/userSlice";
 import { setSidebarOpen, toggleSidebar } from "../../store/slices/sidebar_slice/sidebarSlice";
+import { toast } from "react-toastify";
 
 interface MenuProps {
   isLoggedIn: boolean;
@@ -40,9 +41,12 @@ const Menu: React.FC<MenuProps> = ({ isLoggedIn }) => {
       )}
 
 
-        <MenuItem>
-          <NavLink to="/home" end>Inicio</NavLink>
-        </MenuItem>
+      {!isLoggedIn && (
+          <MenuItem>
+            <NavLink to="/home" end>Inicio</NavLink>
+          </MenuItem>
+        )}
+
         {/* <MenuItem>
           <NavLink to="/about">Nosotros</NavLink>
         </MenuItem>
@@ -68,6 +72,7 @@ const Menu: React.FC<MenuProps> = ({ isLoggedIn }) => {
                     dispatch(logout());           // limpia sesión
                     dispatch(setSidebarOpen(false)); // 🔥 cierra el sidebar globalmente
                     navigate("/home");               // 🔥 redirige al inicio
+                    toast.info("Sesión cerrada");
 
                   }}
                 >

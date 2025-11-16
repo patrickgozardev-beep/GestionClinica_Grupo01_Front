@@ -13,6 +13,7 @@ import {
 import { useDispatch } from "react-redux";
 import { setSidebarOpen } from "../../store/slices/sidebar_slice/sidebarSlice";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 interface LoginUserProps {
   show: boolean;
@@ -57,23 +58,22 @@ const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister,onL
     );
   
     if (!user) {
-      alert("Correo o contraseña incorrectos");
+      toast.error("Correo o contraseña incorrectos"); // Toast error
       return;
     }
   
     onLoginSuccess(user.role);
     dispatch(setSidebarOpen(true));
+    toast.success("Sesión iniciada"); // Toast éxito
   
     onClose();
   
-    // ⭐ Ruta dinámica según el rol
     const redirectRoute = `/${user.role}/dashboard`;
-  
-    // Redirige después de la animación
     setTimeout(() => {
       navigate(redirectRoute);
     }, 400);
   };
+  
   
   
 
