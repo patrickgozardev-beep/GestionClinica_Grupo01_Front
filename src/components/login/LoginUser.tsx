@@ -14,6 +14,9 @@ import { useDispatch } from "react-redux";
 import { setSidebarOpen } from "../../store/slices/sidebar_slice/sidebarSlice";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import AuthService from "../../services/AuthService";
+
+// Importa el servicio de autenticación actualizado (Asegúrate de que la ruta sea correcta)
 
 interface LoginUserProps {
   show: boolean;
@@ -23,9 +26,10 @@ interface LoginUserProps {
 }
 
 
-const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister,onLoginSuccess }) => {
+const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister, onLoginSuccess }) => {
   const [visible, setVisible] = useState(show);
   const [closing, setClosing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Nuevo estado de carga
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -42,7 +46,7 @@ const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister,onL
       setClosing(true);
       setTimeout(() => setVisible(false), 400);
     }
-  }, [show]);
+  }, [show, visible]);
 
   if (!visible) return null;
 
@@ -50,42 +54,43 @@ const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister,onL
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    const user = fakeUsers.find(
-      u => u.correo === formData.correo && u.password === formData.password
-    );
-  
-    if (!user) {
-      toast.error("Correo o contraseña incorrectos"); // Toast error
-      return;
+    setIsLoading(true);
+
+    try {
+      const authResponse = await AuthService.login({ 
+        email: formData.correo, 
+        password: formData.password 
+      });
+
+      const role = authResponse.role as 'paciente' | 'doctor' | 'admin';
+
+      onLoginSuccess(role);
+      dispatch(setSidebarOpen(true));
+      toast.success(`Bienvenido/a. Sesión iniciada como ${role}.`); // Toast éxito
+      
+      onClose();
+      const redirectRoute = `/${role}/dashboard`;
+      
+      setTimeout(() => {
+        navigate(redirectRoute);
+      }, 400);
+
+    } catch (error: any) {
+      toast.error(error.message || "Ocurrió un error inesperado al intentar iniciar sesión."); 
+      console.error(error);
+
+    } finally {
+      setIsLoading(false);
     }
-  
-    onLoginSuccess(user.role);
-    dispatch(setSidebarOpen(true));
-    toast.success("Sesión iniciada"); // Toast éxito
-  
-    onClose();
-  
-    const redirectRoute = `/${user.role}/dashboard`;
-    setTimeout(() => {
-      navigate(redirectRoute);
-    }, 400);
   };
   
-  
-  
-
   const handleGoogleLogin = () => {
     console.log("Inicio de sesión con Google...");
   };
 
-  const fakeUsers = [
-    { correo: "paciente@test.com", password: "123456", role: "paciente" },
-    { correo: "doctor@test.com", password: "123456", role: "doctor" },
-    { correo: "admin@test.com", password: "123456", role: "admin" },
-  ] as const;  
+  // Se eliminó la variable fakeUsers
 
   return (
     <ModalOverlay
@@ -96,63 +101,66 @@ const LoginUser: React.FC<LoginUserProps> = ({ show, onClose, onOpenRegister,onL
     className={closing ? "slide-out" : "slide-in"}
     onClick={(e) => e.stopPropagation()}
     >
-        <CloseButton onClick={onClose}>✖</CloseButton>
+      <CloseButton onClick={onClose}>✖</CloseButton>
 
-        <LoginContainer>
-          <FormCard>
-            <h2>Inicia sesión</h2>
-            <p>Accede con tu cuenta o usa Google.</p>
+      <LoginContainer>
+        <FormCard>
+          <h2>Inicia sesión</h2>
+          <p>Accede con tu cuenta o usa Google.</p>
 
-            <form onSubmit={handleSubmit}>
-              <InputGroup>
-                <label htmlFor="correo">Correo electrónico</label>
-                <input
-                  type="email"
-                  id="correo"
-                  name="correo"
-                  value={formData.correo}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-
-              <InputGroup>
-                <label htmlFor="password">Contraseña</label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-
-              <SubmitButton type="submit">Ingresar</SubmitButton>
-            </form>
-
-            <GoogleButton onClick={handleGoogleLogin}>
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google"
+          <form onSubmit={handleSubmit}>
+            <InputGroup>
+              <label htmlFor="correo">Correo electrónico</label>
+              <input
+                type="email"
+                id="correo"
+                name="correo"
+                value={formData.correo}
+                onChange={handleChange}
+                required
               />
-              Iniciar sesión con Google
-            </GoogleButton>
+            </InputGroup>
 
-            <RegisterLink>
-              ¿No tienes cuenta?{" "}
-              <span
-                onClick={() => {
-                  onClose();      // 👈 cierra el login
-                  setTimeout(onOpenRegister, 400); // 👈 abre el register después de la animación
-                }}
-              >
-                Regístrate aquí
-              </span>
-            </RegisterLink>
-          </FormCard>
-        </LoginContainer>
-      </ModalContent>
+            <InputGroup>
+              <label htmlFor="password">Contraseña</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </InputGroup>
+
+            {/* Deshabilitar el botón mientras se carga */}
+            <SubmitButton type="submit" disabled={isLoading}>
+              {isLoading ? "Ingresando..." : "Ingresar"}
+            </SubmitButton>
+          </form>
+
+          <GoogleButton onClick={handleGoogleLogin} disabled={isLoading}>
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+            />
+            Iniciar sesión con Google
+          </GoogleButton>
+
+          <RegisterLink>
+            ¿No tienes cuenta?{" "}
+            <span
+              onClick={() => {
+                onClose();       // 👈 cierra el login
+                setTimeout(onOpenRegister, 400); // 👈 abre el register después de la animación
+              }}
+            >
+              Regístrate aquí
+            </span>
+          </RegisterLink>
+        </FormCard>
+      </LoginContainer>
+    </ModalContent>
     </ModalOverlay>
   );
 };
