@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 interface UserState {
-  role: "paciente" | "doctor" | "admin" | null;
+  role: "paciente" | "doctor" | "administrador" | null;
 }
 
 const initialState: UserState = {
@@ -12,7 +12,7 @@ export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setRole: (state, action: PayloadAction<"paciente" | "doctor" | "admin">) => {
+    setRole: (state, action: PayloadAction<"paciente" | "doctor" | "administrador">) => {
       state.role = action.payload;
     },
     logout: (state) => {
