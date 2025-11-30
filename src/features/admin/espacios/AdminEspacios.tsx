@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import spacesData from "../../../data/spaces.json"; // <-- Importar JSON
+import React, { useEffect, useState } from "react";
 import {
   SpacesContainer,
   Header,
@@ -9,142 +8,243 @@ import {
   ModalBackground,
   ModalContent,
   Input,
-  Select
+  Select,
+  ModalHeader,
+  ModalFooter,
 } from "./AdminEspacios.styles";
-import { Plus, Edit, Trash, Layers, MapPin } from "lucide-react";
-
-interface Espacio {
-  id: number;
-  nombre: string;
-  ubicacion: string;
-  capacidad: number;
-  especialidad_id: number;
-  estado: boolean;
-}
+import { Layers, MapPin, Plus, Edit, Trash } from "lucide-react";
+import EspaciosService from "../../../services/EspaciosService";
+import EspecialidadesService from "../../../services/Especialidades";
 
 interface Especialidad {
   id: number;
   nombre: string;
 }
 
-const especialidades: Especialidad[] = [
-  { id: 1, nombre: "Odontología" },
-  { id: 2, nombre: "Cardiología" },
-  { id: 3, nombre: "Dermatología" },
-];
+interface Espacio {
+  id: number;
+  nombre: string;
+  ubicacion: string;
+  capacidad: number;
+  estado: "activo" | "inactivo";
+  especialidad: {
+    id: number;
+    nombre?: string;
+  };
+}
+
+interface FormData {
+  nombre: string;
+  ubicacion: string;
+  capacidad: number;
+  estado: "activo" | "inactivo";
+  especialidadId: number;
+}
 
 export const AdminEspacios: React.FC = () => {
-  // Inicializamos con el JSON
   const [spaces, setSpaces] = useState<Espacio[]>([]);
-
-  useEffect(() => {
-    setSpaces(spacesData);
-  }, []);
-
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingSpace, setEditingSpace] = useState<Espacio | null>(null);
-  const [form, setForm] = useState<Omit<Espacio, "id">>({
+  const [editing, setEditing] = useState<Espacio | null>(null);
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+
+  const [form, setForm] = useState<FormData>({
     nombre: "",
     ubicacion: "",
     capacidad: 0,
-    especialidad_id: 1,
-    estado: true
+    estado: "activo",
+    especialidadId: 1,
   });
 
-  const openNew = () => {
-    setEditingSpace(null);
-    setForm({ nombre: "", ubicacion: "", capacidad: 0, especialidad_id: 1, estado: true });
-    setModalOpen(true);
-  };
-
-  const editSpace = (space: Espacio) => {
-    setEditingSpace(space);
-    setForm(space);
-    setModalOpen(true);
-  };
-
-  const save = () => {
-    if (!form.nombre || !form.capacidad) return;
-
-    if (editingSpace) {
-      setSpaces(prev =>
-        prev.map(s => (s.id === editingSpace.id ? { ...s, ...form } : s))
-      );
-    } else {
-      setSpaces(prev => [
-        ...prev,
-        { id: prev.length + 1, ...form }
-      ]);
+  
+  const fetchEspecialidades = async () => {
+    try {
+      const res = await EspecialidadesService.getAll();
+      setEspecialidades(res.data);
+    } catch (err) {
+      console.error("Error al cargar especialidades:", err);
     }
-    setModalOpen(false);
+  };
+  
+  // Cargar lista desde el backend
+  const fetchSpaces = async () => {
+    try {
+      const res = await EspaciosService.getAll();
+      setSpaces(res.data);
+    } catch (err) {
+      console.error("Error al cargar espacios:", err);
+    }
   };
 
-  const deleteSpace = (id: number) => {
-    setSpaces(prev => prev.filter(s => s.id !== id));
+  useEffect(() => {
+    fetchSpaces();
+    fetchEspecialidades();
+
+  }, []);
+
+  // Abrir modal para nuevo espacio
+  const openNew = () => {
+    setEditing(null);
+    setForm({
+      nombre: "",
+      ubicacion: "",
+      capacidad: 0,
+      estado: "activo",
+      especialidadId: 1,
+    });
+    setModalOpen(true);
+  };
+
+  // Abrir modal para edición
+  const openEdit = (space: Espacio) => {
+    setEditing(space);
+    setForm({
+      nombre: space.nombre,
+      ubicacion: space.ubicacion,
+      capacidad: space.capacidad,
+      estado: space.estado,
+      especialidadId: space.especialidad.id,
+    });
+    setModalOpen(true);
+  };
+
+  const save = async () => {
+    if (!form.nombre || form.capacidad <= 0) return;
+
+    const payload = {
+      nombre: form.nombre,
+      ubicacion: form.ubicacion,
+      capacidad: form.capacidad,
+      estado: form.estado,
+      especialidad: { id: form.especialidadId },
+    };
+
+    try {
+      if (editing) {
+        await EspaciosService.update(editing.id, payload);
+      } else {
+        await EspaciosService.create(payload);
+      }
+
+      setModalOpen(false);
+      fetchSpaces();
+    } catch (err) {
+      console.error("Error al guardar espacio:", err);
+    }
+  };
+
+  const deleteSpace = async (id: number) => {
+    try {
+      await EspaciosService.delete(id);
+      fetchSpaces();
+    } catch (err) {
+      console.error("Error al eliminar:", err);
+    }
   };
 
   return (
     <SpacesContainer>
       <Header>
-        <h2><Layers /> Gestión de Espacios</h2>
-        <Button onClick={openNew}><Plus size={16} /> Nuevo Espacio</Button>
+        <h2>
+          <Layers /> Gestión de Espacios
+        </h2>
+        <Button onClick={openNew}>
+          <Plus size={16} /> Nuevo Espacio
+        </Button>
       </Header>
 
       <SpacesGrid>
-        {spaces.map(space => (
+        {spaces.map((space) => (
           <SpaceCard key={space.id}>
             <h3>{space.nombre}</h3>
-            <p><MapPin size={16} /> {space.ubicacion}</p>
-            <p>Especialidad: {especialidades.find(e => e.id === space.especialidad_id)?.nombre}</p>
-            <p>Capacidad: {space.capacidad}</p>
-            <p style={{ color: space.estado ? "#16a34a" : "#ef4444", fontWeight: "bold" }}>
-              {space.estado ? "Activo" : "Inactivo"}
+
+            <p>
+              <MapPin size={16} /> {space.ubicacion}
             </p>
+
+            <p>
+              Especialidad:{" "}
+              {especialidades.find((e) => e.id === space.especialidad.id)?.nombre}
+            </p>
+
+            <p>Capacidad: {space.capacidad}</p>
+
+            <p
+              style={{
+                color: space.estado === "activo" ? "#16a34a" : "#ef4444",
+                fontWeight: "bold",
+              }}
+            >
+              {space.estado === "activo" ? "Activo" : "Inactivo"}
+            </p>
+
             <div className="actions">
-              <Button onClick={() => editSpace(space)}><Edit size={16} /></Button>
-              <Button variant="destructive" onClick={() => deleteSpace(space.id)}><Trash size={16} /></Button>
+              <Button onClick={() => openEdit(space)}>
+                <Edit size={16} />
+              </Button>
+
+              <Button variant="destructive" onClick={() => deleteSpace(space.id)}>
+                <Trash size={16} />
+              </Button>
             </div>
           </SpaceCard>
         ))}
       </SpacesGrid>
 
+      {/* MODAL */}
       <ModalBackground open={modalOpen}>
         <ModalContent>
-          <h3>{editingSpace ? "Editar Espacio" : "Nuevo Espacio"}</h3>
+          <ModalHeader>
+            <h3>{editing ? "Editar Espacio" : "Nuevo Espacio"}</h3>
+          </ModalHeader>
+
           <Input
             placeholder="Nombre"
             value={form.nombre}
-            onChange={e => setForm({...form, nombre: e.target.value})}
+            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
           />
+
           <Input
             placeholder="Ubicación"
             value={form.ubicacion}
-            onChange={e => setForm({...form, ubicacion: e.target.value})}
+            onChange={(e) => setForm({ ...form, ubicacion: e.target.value })}
           />
+
           <Input
             type="number"
             placeholder="Capacidad"
             value={form.capacidad}
-            onChange={e => setForm({...form, capacidad: Number(e.target.value)})}
+            onChange={(e) => setForm({ ...form, capacidad: Number(e.target.value) })}
           />
+
           <Select
-            value={form.especialidad_id}
-            onChange={e => setForm({...form, especialidad_id: Number(e.target.value)})}
+            value={form.especialidadId}
+            onChange={(e) =>
+              setForm({ ...form, especialidadId: Number(e.target.value) })
+            }
           >
-            {especialidades.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-          </Select>
-          <Select
-            value={form.estado ? 1 : 0}
-            onChange={e => setForm({...form, estado: e.target.value === "1"})}
-          >
-            <option value={1}>Activo</option>
-            <option value={0}>Inactivo</option>
+            {especialidades.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nombre}
+              </option>
+            ))}
           </Select>
 
-          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
+          <Select
+            value={form.estado}
+            onChange={(e) =>
+              setForm({ ...form, estado: e.target.value as "activo" | "inactivo" })
+            }
+          >
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </Select>
+
+          <ModalFooter>
             <Button onClick={save}>Guardar</Button>
-            <Button variant="destructive" onClick={() => setModalOpen(false)}>Cancelar</Button>
-          </div>
+            <Button variant="destructive" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </Button>
+          </ModalFooter>
         </ModalContent>
       </ModalBackground>
     </SpacesContainer>

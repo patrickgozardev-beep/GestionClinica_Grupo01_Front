@@ -85,7 +85,7 @@ export const FormCard = styled.div`
   h2 {
     margin-bottom: 0.5rem;
     font-size: 1.6rem;
-    color:#007c7c ;
+    color: #007c7c;
   }
 
   p {
@@ -102,12 +102,13 @@ export const InputGroup = styled.div`
     display: block;
     margin-bottom: 0.3rem;
     font-weight: 500;
-    color:#007c7c;
+    color: #007c7c;
   }
 
   input {
     width: 100%;
     padding: 0.7rem;
+    padding-right: 2.5rem; /* espacio para el icono */
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 0.95rem;
@@ -116,6 +117,29 @@ export const InputGroup = styled.div`
     &:focus {
       border-color: #007c7c;
       outline: none;
+    }
+  }
+
+  .password-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: #007c7c;
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      color: #005959;
     }
   }
 `;
@@ -134,6 +158,11 @@ export const SubmitButton = styled.button`
 
   &:hover {
     background: rgb(13, 82, 82);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -161,6 +190,11 @@ export const GoogleButton = styled.button`
   &:hover {
     background: #f5f5f5;
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 export const RegisterLink = styled.div`
@@ -179,4 +213,3 @@ export const RegisterLink = styled.div`
     }
   }
 `;
-

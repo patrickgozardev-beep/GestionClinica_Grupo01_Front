@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Header,
@@ -10,106 +10,148 @@ import {
   Input,
   Select
 } from "./PlantillasHorarios.styles";
+
 import { Plus, Edit, Trash, CalendarDays, Clock } from "lucide-react";
 
-interface Plantilla {
-  id: number;
-  espacio_id: number;
-  dias: string[]; // ["Lunes", "Martes", ...]
-  hora_inicio: string;
-  hora_fin: string;
-}
+import type { PlantillaHorarioDto } from "../../../types/plantillaHorario";
+import PlantillaHorarioService from "../../../services/PlantillaHorarioService";
+import { toPlantillaHorarioDto } from "../../../utils/plantillaMapper";
+import EspaciosService from "../../../services/EspaciosService";
 
 interface Espacio {
   id: number;
   nombre: string;
 }
 
-// Mock de espacios (luego lo traes de tu JSON o BD)
-const espaciosMock: Espacio[] = [
-  { id: 1, nombre: "Consultorio 1" },
-  { id: 2, nombre: "Consultorio 2" },
-];
-
-// Generar plantillas predeterminadas: lunes a viernes, de 7:00 a 19:00, intervalos de 1 hora
-const horas = [
-  { inicio: "07:00", fin: "08:00" },
-  { inicio: "08:00", fin: "09:00" },
-  { inicio: "09:00", fin: "10:00" },
-  { inicio: "10:00", fin: "11:00" },
-  { inicio: "11:00", fin: "12:00" },
-  { inicio: "12:00", fin: "13:00" },
-  { inicio: "13:00", fin: "14:00" },
-  { inicio: "14:00", fin: "15:00" },
-  { inicio: "15:00", fin: "16:00" },
-  { inicio: "16:00", fin: "17:00" },
-  { inicio: "17:00", fin: "18:00" },
-  { inicio: "18:00", fin: "19:00" },
-];
-
-const diasSemanaLaboral = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-
-const defaultTemplates: Plantilla[] = [];
-let idCounter = 1;
-for (const h of horas) {
-  defaultTemplates.push({
-    id: idCounter++,
-    espacio_id: 1,
-    dias: diasSemanaLaboral,
-    hora_inicio: h.inicio,
-    hora_fin: h.fin,
-  });
-}
 
 export const PlantillasHorarios: React.FC = () => {
-  const [templates, setTemplates] = useState<Plantilla[]>(defaultTemplates);
+  const [templates, setTemplates] = useState<PlantillaHorarioDto[]>([]);
+  const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<Plantilla | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<PlantillaHorarioDto | null>(null);
 
-  const [form, setForm] = useState<Omit<Plantilla, "id">>({
-    espacio_id: 1,
-    dias: ["Lunes"],
-    hora_inicio: "09:00",
-    hora_fin: "18:00",
+  const [form, setForm] = useState<PlantillaHorarioDto>({
+    espacioId: 1,
+    nombre: "",
+    tipo: "recurrente",
+    diasSemana: "",
+    horaInicio: "09:00",
+    horaFin: "18:00",
+    fechaInicio: "2025-03-01",
+    fechaFin: "2025-03-30",
+    intervaloMinutos: 60,
+    activo: true
   });
 
-  const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+  const diasSemanaList = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
+
+
+  const loadTemplates = async () => {
+    try {
+      const resp = await PlantillaHorarioService.getAll();
+      setTemplates(resp.data);
+    } catch (error) {
+      console.error("Error cargando plantillas", error);
+    }
+  };
+
+  const loadEspacios = async () => {
+    try {
+      const resp = await EspaciosService.getAll();
+      setEspacios(resp.data); // Asumiendo que tu backend devuelve la lista directamente
+    } catch (error) {
+      console.error("Error cargando espacios", error);
+      alert("No se pudieron cargar los espacios");
+    }
+  };
+
+  useEffect(() => {
+    loadTemplates()
+    loadEspacios();
+  }, []);
+
+  const toggleDia = (dia: string) => {
+    const dias = Array.isArray(form.diasSemana)
+      ? form.diasSemana
+      : form.diasSemana.split(",").map(d => d.trim()).filter(Boolean);
+  
+    const updated = dias.includes(dia)
+      ? dias.filter(d => d !== dia)
+      : [...dias, dia];
+  
+    setForm({ ...form, diasSemana: updated });
+  };
+  
 
   const openNew = () => {
     setEditingTemplate(null);
-    setForm({ espacio_id: 1, dias: ["Lunes"], hora_inicio: "09:00", hora_fin: "18:00" });
+  
+    const hoy = new Date();
+    const enUnMes = new Date();
+    enUnMes.setMonth(hoy.getMonth() + 1);
+  
+    const format = (d: Date) => d.toISOString().split("T")[0]; // yyyy-mm-dd
+  
+    setForm({
+      espacioId: 1,
+      nombre: "",
+      tipo: "recurrente",
+      diasSemana: "", 
+      horaInicio: "09:00",
+      horaFin: "18:00",
+      fechaInicio: format(hoy),   
+      fechaFin: format(enUnMes),  
+      intervaloMinutos: 60,
+      activo: true,
+    });
+  
     setModalOpen(true);
   };
+  
 
-  const editTemplate = (tpl: Plantilla) => {
+  const editTemplate = (tpl: PlantillaHorarioDto) => {
     setEditingTemplate(tpl);
-    setForm(tpl);
+    setForm(toPlantillaHorarioDto(tpl));
     setModalOpen(true);
   };
 
-  const save = () => {
-    if (!form.hora_inicio || !form.hora_fin) return;
+  const save = async () => {
+    const dto = toPlantillaHorarioDto(form);
 
-    if (editingTemplate) {
-      setTemplates(prev =>
-        prev.map(t => (t.id === editingTemplate.id ? { ...t, ...form } : t))
-      );
-    } else {
-      setTemplates(prev => [
-        ...prev,
-        { id: prev.length + 1, ...form }
-      ]);
+    try {
+      if (editingTemplate) {
+        await PlantillaHorarioService.update(editingTemplate.id!, dto);
+
+        setTemplates(prev =>
+          prev.map(t => (t.id === editingTemplate.id ? form : t))
+        );
+      } else {
+        const resp = await PlantillaHorarioService.create(dto);
+
+        setTemplates(prev => [
+          ...prev,
+          { ...form, id: resp.data.id }
+        ]);
+      }
+
+      alert("Plantilla guardada correctamente.");
+      setModalOpen(false);
+
+    } catch (err) {
+      console.error("❌ Error guardando plantilla:", err);
+      alert("Error al guardar la plantilla");
     }
-    setModalOpen(false);
   };
 
-  const deleteTemplate = (id: number) => {
-    setTemplates(prev => prev.filter(t => t.id !== id));
-  };
+  const deleteTemplate = async (id: number) => {
+    try {
+      await PlantillaHorarioService.delete(id);
 
-  const generateHorarios = (tpl: Plantilla) => {
-    console.log("Generando horarios para plantilla:", tpl);
-    // Aquí harías la lógica para crear Slots en la tabla Horario
+      setTemplates(prev => prev.filter(t => t.id !== id));
+
+    } catch (err) {
+      alert("No se pudo eliminar");
+    }
   };
 
   return (
@@ -122,70 +164,139 @@ export const PlantillasHorarios: React.FC = () => {
       <TemplatesGrid>
         {templates.map(tpl => (
           <TemplateCard key={tpl.id}>
-            <p><Clock size={16} /> {tpl.hora_inicio} - {tpl.hora_fin}</p>
-            <p>Días: {tpl.dias.join(", ")}</p>
-            <p>Espacio: {espaciosMock.find(e => e.id === tpl.espacio_id)?.nombre}</p>
+            <p><Clock size={16} /> {tpl.horaInicio} - {tpl.horaFin}</p>
+            <p>Días: {tpl.diasSemana}</p>
+            <p>Espacio: {espacios.find(e => e.id === tpl.espacioId)?.nombre}</p>
+
             <div className="actions">
               <Button onClick={() => editTemplate(tpl)}><Edit size={16} /></Button>
-              <Button variant="destructive" onClick={() => deleteTemplate(tpl.id)}><Trash size={16} /></Button>
-              <Button variant="secondary" onClick={() => generateHorarios(tpl)}>Generar Horarios</Button>
+              <Button variant="destructive" onClick={() => deleteTemplate(tpl.id!)}><Trash size={16} /></Button>
             </div>
           </TemplateCard>
         ))}
       </TemplatesGrid>
 
+      {/* MODAL */}
       <ModalBackground open={modalOpen}>
         <ModalContent>
           <h3>{editingTemplate ? "Editar Plantilla" : "Nueva Plantilla"}</h3>
 
+          {/* Espacio */}
+          <label>Espacio</label>
           <Select
-            value={form.espacio_id}
-            onChange={e => setForm({...form, espacio_id: Number(e.target.value)})}
+            value={form.espacioId}
+            onChange={e => setForm({ ...form, espacioId: Number(e.target.value) })}
           >
-            {espaciosMock.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+          {espacios.map(e => (
+            <option key={e.id} value={e.id}>{e.nombre}</option>
+          ))}
           </Select>
 
-          <div style={{ margin: "0.5rem 0" }}>
-            <label>Días de la semana:</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-              {diasSemana.map(d => (
-                <label key={d}>
-                  <input
-                    type="checkbox"
-                    value={d}
-                    checked={form.dias.includes(d)}
-                    onChange={e => {
-                      const checked = e.target.checked;
-                      setForm(prev => ({
-                        ...prev,
-                        dias: checked
-                          ? [...prev.dias, d]
-                          : prev.dias.filter(day => day !== d)
-                      }));
-                    }}
-                  /> {d}
-                </label>
-              ))}
-            </div>
-          </div>
-
+          {/* Nombre */}
+          <label>Nombre</label>
           <Input
-            type="time"
-            value={form.hora_inicio}
-            onChange={e => setForm({...form, hora_inicio: e.target.value})}
-          />
-          <Input
-            type="time"
-            value={form.hora_fin}
-            onChange={e => setForm({...form, hora_fin: e.target.value})}
+            value={form.nombre}
+            onChange={e => setForm({ ...form, nombre: e.target.value })}
           />
 
-          <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end", marginTop: "1rem" }}>
+          {/* Tipo */}
+          <label>Tipo de plantilla</label>
+          <Select
+            value={form.tipo}
+            onChange={e => setForm({ ...form, tipo: e.target.value as "recurrente" | "puntual" })}
+          >
+            <option value="recurrente">Recurrente</option>
+            <option value="puntual">Puntual</option>
+          </Select>
+
+          {/* Días semana (solo si es recurrente) */}
+          {form.tipo === "recurrente" && (
+            <>
+              <label>Días de la semana</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {diasSemanaList.map(d => {
+                  const diasSeleccionados = Array.isArray(form.diasSemana)
+                    ? form.diasSemana
+                    : (form.diasSemana || "").split(",");
+
+                  return (
+                    <label key={d}>
+                      <input
+                        type="checkbox"
+                        checked={diasSeleccionados.includes(d)}
+                        onChange={() => toggleDia(d)}
+                      />
+                      {d}
+                    </label>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Fecha inicio y fin */}
+          <label>Fecha de inicio</label>
+          <Input
+            type="date"
+            value={form.fechaInicio}
+            onChange={e => setForm({ ...form, fechaInicio: e.target.value })}
+          />
+
+          <label>Fecha de fin</label>
+          <Input
+            type="date"
+            value={form.fechaFin}
+            onChange={e => setForm({ ...form, fechaFin: e.target.value })}
+          />
+
+          {/* Horas */}
+          <label>Hora inicio</label>
+          <Input
+            type="time"
+            value={form.horaInicio}
+            onChange={e => setForm({ ...form, horaInicio: e.target.value })}
+          />
+
+          <label>Hora fin</label>
+          <Input
+            type="time"
+            value={form.horaFin}
+            onChange={e => setForm({ ...form, horaFin: e.target.value })}
+          />
+
+          {/* Intervalo */}
+          <label>Intervalo de minutos</label>
+          <Input
+            type="number"
+            min={1}
+            value={form.intervaloMinutos}
+            onChange={e => setForm({ ...form, intervaloMinutos: Number(e.target.value) })}
+          />
+
+          {/* Activo */}
+          <label style={{ marginTop: "0.5rem" }}>
+            <input
+              type="checkbox"
+              checked={form.activo}
+              onChange={e => setForm({ ...form, activo: e.target.checked })}
+            />
+            Activo
+          </label>
+
+          {/* Botones */}
+          <div style={{
+            marginTop: "1rem",
+            display: "flex",
+            gap: "1rem",
+            justifyContent: "flex-end"
+          }}>
             <Button onClick={save}>Guardar</Button>
             <Button variant="destructive" onClick={() => setModalOpen(false)}>Cancelar</Button>
           </div>
+
         </ModalContent>
       </ModalBackground>
+
     </Container>
   );
 };

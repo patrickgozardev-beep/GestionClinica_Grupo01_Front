@@ -1,8 +1,6 @@
 import axios from 'axios';
 import api from '../axiosConfig';
-import type { LoginCredentials, LoginResponse } from '../types/auth'; // Importamos el nuevo tipo
-
-const API_URL = '/auth';
+import type { LoginCredentials, LoginResponse } from '../types/auth';
 
 class AuthService {
   
@@ -13,8 +11,7 @@ class AuthService {
   async login({ email, password }: LoginCredentials): Promise<LoginResponse> {
     try {
 
-      // Cambiamos el tipo genérico de la respuesta a LoginResponse
-      const response = await api.post<LoginResponse>(API_URL + '/login', {
+      const response = await api.post<LoginResponse>('/auth/login', {
         email,
         password,
       });

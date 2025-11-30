@@ -99,3 +99,17 @@ export const Select = styled.select`
   border: 1px solid #ccc;
   width: 100%;
 `;
+
+export const FiltersBar = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  background: #ffffff;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+
+  input {
+    width: 200px;
+  }
+`;

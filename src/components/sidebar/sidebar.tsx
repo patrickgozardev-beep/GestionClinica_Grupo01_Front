@@ -12,7 +12,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../../store/store";
 
 interface SidebarProps {
-  role: "paciente" | "doctor" | "admin";
+  role: "paciente" | "doctor" | "administrador";
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ role }) => {
